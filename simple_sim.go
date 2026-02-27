@@ -36,7 +36,7 @@ func main() {
 	// so this will be a sequential processor
 	// only to assess how slow it will be compared to other upcoming models alright
 
-	//first lets create an array of 10k tasks
+	//first lets create an array of 1k tasks
 	tasks := [1000]int{}
 
 	// we'll fill it with values from 0-20000 randomly
