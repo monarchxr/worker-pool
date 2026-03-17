@@ -23,11 +23,6 @@ func processTask(task int) {
 
 	// now make it sleep
 	time.Sleep(duration)
-
-	// now the computation part
-	ans := task * task
-	ans = ans // dont mind this, its only to skip the "declared but not used"
-	// its not necessary to do something with it rn
 }
 
 func main() {
