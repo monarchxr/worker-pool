@@ -7,16 +7,13 @@ import (
 	"time"
 )
 
-func processTask(task int, wg *sync.WaitGroup) {
+func processTask(wg *sync.WaitGroup) {
 
 	defer wg.Done()
 
 	duration := time.Duration(rand.Intn(41)+10) * time.Millisecond
 
 	time.Sleep(duration)
-
-	ans := task * task
-	ans = ans
 }
 
 func main() {
@@ -47,15 +44,9 @@ func main() {
 
 	//lets begin
 
-	tasks := [1000]int{}
-
-	for i := 0; i < 1000; i++ {
-		tasks[i] = rand.Intn(20000)
-	}
-
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 500; i++ {
 		wg.Add(1)
-		go processTask(tasks[i], &wg)
+		go processTask(&wg)
 	}
 	wg.Wait()
 
