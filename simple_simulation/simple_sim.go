@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func processTask(task int) {
+func processTask() {
 	// here we need to process task
 
 	// first we'll sleep the task for a random amount of time
@@ -31,17 +31,9 @@ func main() {
 	// so this will be a sequential processor
 	// only to assess how slow it will be compared to other upcoming models alright
 
-	//first lets create an array of 1k tasks
-	tasks := [1000]int{}
-
-	// we'll fill it with values from 0-20000 randomly
-	for i := 0; i < 1000; i++ {
-		tasks[i] = rand.Intn(20000)
-	}
-
-	// now we pass it to the processing function
-	for i := 0; i < 1000; i++ {
-		processTask(tasks[i])
+	// we pass it to the processing function
+	for i := 0; i < 500; i++ {
+		processTask()
 	}
 
 	//end
