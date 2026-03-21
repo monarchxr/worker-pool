@@ -1,0 +1,41 @@
+Worker Pool — How It Works
+
+The Problem With Naive Concurrency
+In the naive model, you spawn one goroutine per task. 500 tasks = 500 goroutines alive simultaneously. Each goroutine takes ~2KB of stack memory. This works fine at 500, but at 10,000 tasks you're looking at 20MB just for goroutine stacks, and the Go scheduler is sweating trying to manage that many. It's uncontrolled — you're at the mercy of however many tasks come in.
+
+The Core Idea of a Worker Pool
+Instead of "one goroutine per task", you flip it to "fixed goroutines, tasks flow to them." You decide upfront how many workers you want — say 50 — and those 50 goroutines are the only ones that ever exist, regardless of whether you have 500 or 500,000 tasks. The tasks are the temporary thing now, not the goroutines.
+
+The Jobs Channel
+gotasks := make(chan int, total_tasks)
+This is your queue. A buffered channel sized to the number of tasks. You load all jobs into it upfront, then workers pull from it one at a time. Buffered means the loading loop never blocks — it just fills the channel and moves on.
+
+The Workers
+Each worker runs a for range loop over the jobs channel. This is the key — for range on a channel blocks and waits when the channel is empty, and exits automatically when the channel is closed. So workers are never spinning or wasting CPU. They sit idle when there's no work, wake up when a job arrives, process it, then immediately look for the next one.
+
+close(tasks) — The Kill Signal
+When you've loaded all jobs, you call close(tasks). This is what tells every worker "no more jobs are coming." Their for range loops drain whatever's left in the channel and then exit cleanly. Without this, workers would block forever waiting for jobs that never arrive.
+
+WaitGroup — Knowing When Workers Are Done
+You wg.Add(1) once per worker when spawning, and each worker calls defer wg.Done() when it exits. wg.Wait() in main blocks until all 50 workers have finished. This is how main knows the work is truly complete.
+
+The Results Channel
+goresults := make(chan time.Duration, total_tasks)
+Workers send their per-task latency here after each task completes. It flows in the opposite direction — jobs go in, latencies come out. Buffered to total_tasks so workers never block trying to send a result. This is the Go philosophy: don't communicate by sharing memory, share memory by communicating. No mutex, no shared slice, no race conditions.
+
+The Sentinel Goroutine
+gogo func() {
+    wg.Wait()
+    close(results)
+}()
+```
+
+You can't close results in main because main doesn't know when workers finish. You can't close it in each worker because multiple goroutines closing the same channel causes a panic. So you spin up one dedicated goroutine whose only job is to wait for all workers to finish via WaitGroup, then close results. Once results closes, main's `for range results` exits and you compute your metrics.
+
+---
+
+**The Final Flow**
+```
+main loads jobs → tasks channel → workers pull and process 
+→ results channel → main drains and computes avg/min/max
+Everything moves through channels. Nothing is shared. That's the whole pattern.
