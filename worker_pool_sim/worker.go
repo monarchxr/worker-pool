@@ -37,7 +37,7 @@ func main() {
 	// we spawn a certain number of workers
 
 	// lets say 50 workers
-	total_workers := 10
+	total_workers := 50
 
 	// and lets say we have 500 tasks
 	total_tasks := 500
